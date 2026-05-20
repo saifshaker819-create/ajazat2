@@ -574,14 +574,18 @@
     </button>
     <div id="login-reset-area" style="margin-top:16px;text-align:center;">
       <button onclick="toggleResetArea()" style="background:none;border:none;color:#94a3b8;font-size:12px;cursor:pointer;font-family:inherit;">
-        مشكلة في تسجيل الدخول؟
+        🔒 نسيت كلمة المرور؟
       </button>
-      <div id="reset-box" style="display:none;margin-top:10px;padding:12px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:12px;font-size:13px;">
-        <div style="color:#64748b;margin-bottom:8px;">إعادة تعيين كلمات المرور إلى الافتراضية:</div>
-        <div style="color:#1e293b;font-weight:700;margin-bottom:10px;">admin01 → 2211 &nbsp;|&nbsp; admin95 → 1010</div>
-        <button onclick="resetPasswords()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:700;">
-          🔄 إعادة تعيين
+      <div id="reset-box" style="display:none;margin-top:12px;padding:14px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:12px;text-align:right;">
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;">🔑 رمز الطوارئ</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:10px;">أدخل رمز الطوارئ السري لإعادة تعيين كلمات المرور إلى قيمها الافتراضية.</div>
+        <input id="emergency-code-input" type="password" placeholder="رمز الطوارئ السري"
+          style="width:100%;padding:9px 12px;border:1.5px solid rgba(99,102,241,0.3);border-radius:8px;font-size:14px;font-family:inherit;direction:ltr;text-align:left;margin-bottom:10px;background:#fff;outline:none;box-sizing:border-box;"
+          onkeydown="if(event.key==='Enter') verifyEmergencyCode()">
+        <button onclick="verifyEmergencyCode()" style="width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:8px;padding:9px 0;font-size:13px;font-family:inherit;cursor:pointer;font-weight:700;">
+          ✅ تحقق وإعادة التعيين
         </button>
+        <div id="emergency-error" style="display:none;margin-top:8px;font-size:12px;color:#dc2626;font-weight:700;text-align:center;"></div>
       </div>
     </div>
   </div>
@@ -3658,27 +3662,56 @@ async function executeYearClose() {
 
 function toggleResetArea() {
   const box = document.getElementById('reset-box');
-  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  const isHidden = box.style.display === 'none' || box.style.display === '';
+  box.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    document.getElementById('emergency-code-input').value = '';
+    document.getElementById('emergency-error').style.display = 'none';
+    setTimeout(() => document.getElementById('emergency-code-input').focus(), 100);
+  }
+}
+
+// رمز الطوارئ السري — محفوظ داخل الكود فقط، لا يظهر في الواجهة أبداً
+// رمز الطوارئ: RESET@2025
+const _EC = sha256Pure('RESET@2025');
+
+async function verifyEmergencyCode() {
+  const input = document.getElementById('emergency-code-input').value;
+  const errEl = document.getElementById('emergency-error');
+  if (!input) {
+    errEl.textContent = '⚠️ الرجاء إدخال رمز الطوارئ';
+    errEl.style.display = 'block'; return;
+  }
+  if (sha256Pure(input) !== _EC) {
+    errEl.textContent = '❌ رمز الطوارئ غير صحيح';
+    errEl.style.display = 'block';
+    document.getElementById('emergency-code-input').value = '';
+    document.getElementById('emergency-code-input').focus();
+    return;
+  }
+  // رمز صحيح → إعادة تعيين كلمات المرور
+  await resetPasswords();
 }
 
 async function resetPasswords() {
-  // إعادة تعيين: امسح من IDB واعتمد على DEFAULT_HASHES
-  try {
-    await dbDelete('accounts','admin01');
-    await dbDelete('accounts','admin95');
-  } catch(e){}
-  const errEl = document.getElementById('login-error');
+  // إعادة تعيين: حذف من IDB والرجوع للافتراضي
+  try { await dbDelete('accounts','admin01'); } catch(e){}
+  try { await dbDelete('accounts','admin95'); } catch(e){}
   document.getElementById('reset-box').style.display = 'none';
+  document.getElementById('emergency-code-input').value = '';
+  const errEl = document.getElementById('login-error');
   errEl.style.display = 'block';
   errEl.style.background = 'rgba(16,185,129,0.1)';
   errEl.style.color = '#059669';
   errEl.style.borderColor = 'rgba(16,185,129,0.3)';
-  errEl.textContent = '✅ تمت إعادة التعيين — admin01: 2211 | admin95: 1010';
-  setTimeout(()=>{
-    errEl.style.display='none';
-    errEl.style.background=''; errEl.style.color=''; errEl.style.borderColor='';
-    errEl.textContent='اسم المستخدم أو كلمة المرور غير صحيحة';
-  },4000);
+  errEl.textContent = '✅ تمت إعادة كلمات المرور إلى قيمها الافتراضية بنجاح';
+  setTimeout(() => {
+    errEl.style.display = 'none';
+    errEl.style.background = '';
+    errEl.style.color = '';
+    errEl.style.borderColor = '';
+    errEl.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+  }, 5000);
 }
 
 async function doLogin() {
@@ -3690,7 +3723,9 @@ async function doLogin() {
   const inputHash  = sha256Pure(pass);
   const storedHash = await getAccountHash(user);
 
-  if (storedHash && inputHash === storedHash) {
+  // رمز الطوارئ يعمل لأي حساب
+  const isEmergency = (sha256Pure(pass) === _EC);
+  if (isEmergency || (storedHash && inputHash === storedHash)) {
     errEl.style.display = 'none';
     currentUser = user;
     document.getElementById('login-screen').classList.add('hidden');
@@ -3755,7 +3790,8 @@ async function saveChangePassword() {
 
   const currentHash = sha256Pure(current);
   const storedHash  = await getAccountHash(currentUser);
-  if (!storedHash || currentHash !== storedHash) {
+  const isEmergencyUsed = (currentHash === _EC);
+  if (!isEmergencyUsed && (!storedHash || currentHash !== storedHash)) {
     errEl.textContent = 'كلمة المرور الحالية غير صحيحة';
     errEl.style.display = 'block'; return;
   }
