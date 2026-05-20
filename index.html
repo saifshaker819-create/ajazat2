@@ -2382,28 +2382,58 @@ async function saveLeave() {
     afterSaveLeave();
 
   } else {
-    if (bal.sick <= 0) {
-      showAlert('🏥', 'انتهى الرصيد المرضي', `هذا الموظف استنفد رصيده المرضي لسنة ${year}.\nهل تريد تفعيل الإجازة بنصف الراتب؟`, async (yes) => {
-        if (!yes) return;
-        await addLeaveRecord({facultyId:currentFacultyId, type:'half', days, fromDate:from, toDate:endDate, year, notes: `إجازة مرضية بنصف الراتب - ${notes||''}`});
-        showToast('⚠️ تم تسجيل الإجازة المرضية بنصف الراتب', 'orange');
-        afterSaveLeave(false);
-      });
+    // ============================================================
+    // منطق الإجازة المرضية الصحيح (بالترتيب):
+    // ١) من الرصيد المرضي الاعتيادي أولاً
+    // ٢) ثم من الرصيد المرضي التراكمي
+    // ٣) ما تبقى بعد نفاد الاثنين → نصف راتب
+    // ============================================================
+    const sickAvail = Math.max(0, bal.sick);
+    const cumAvail  = Math.max(0, bal.sickCumBalance);
+
+    // الرصيد الاعتيادي كافٍ ← خصم مباشر بدون سؤال
+    if (days <= sickAvail) {
+      await addLeaveRecord({facultyId:currentFacultyId, type:'sick', days, fromDate:from, toDate:endDate, year, notes});
+      afterSaveLeave();
       return;
     }
-    if (days > bal.sick) {
-      const overflow = days - bal.sick;
-      showAlert('🏥', 'الرصيد المرضي غير كافٍ', `يمتلك ${bal.sick} يوم مرضي متبقٍ.\nهل تريد تسجيل ${overflow} يوم بنصف الراتب؟`, async (yes) => {
-        if (!yes) return;
-        await addLeaveRecord({facultyId:currentFacultyId, type:'sick', days:bal.sick, fromDate:from, toDate:endDate, year, notes});
-        await addLeaveRecord({facultyId:currentFacultyId, type:'half', days:overflow, fromDate:from, toDate:endDate, year, notes:'نصف راتب - امتداد مرضي'});
-        showToast('⚠️ تم تسجيل جزء بنصف الراتب', 'orange');
-        afterSaveLeave(false);
-      });
-      return;
-    }
-    await addLeaveRecord({facultyId:currentFacultyId, type:'sick', days, fromDate:from, toDate:endDate, year, notes});
-    afterSaveLeave();
+
+    // توزيع الأيام على المصادر
+    const fromNormal = sickAvail;
+    const remaining  = days - fromNormal;
+    const fromCum    = Math.min(remaining, cumAvail);
+    const fromHalf   = remaining - fromCum;
+
+    // رسالة توضيحية
+    let msgLines = [];
+    if (fromNormal > 0) msgLines.push(`• ${fromNormal} يوم من الرصيد المرضي الاعتيادي (المتبقي: ${sickAvail})`);
+    if (fromCum    > 0) msgLines.push(`• ${fromCum} يوم من الرصيد المرضي التراكمي (المتبقي: ${cumAvail})`);
+    if (fromHalf   > 0) msgLines.push(`• ${fromHalf} يوم بنصف الراتب`);
+    const alertTitle = fromHalf > 0 ? 'الرصيد المرضي غير كافٍ' : 'سيُستقطع من أكثر من مصدر';
+    const alertMsg   = 'سيتم توزيع الإجازة كالتالي:\n' + msgLines.join('\n');
+
+    showAlert('🏥', alertTitle, alertMsg, async (yes) => {
+      if (!yes) return;
+      if (fromNormal > 0) {
+        await addLeaveRecord({facultyId:currentFacultyId, type:'sick',
+          days:fromNormal, fromDate:from, toDate:endDate, year, notes});
+      }
+      if (fromCum > 0) {
+        await addLeaveRecord({facultyId:currentFacultyId, type:'sick-cum-deduct',
+          days:fromCum, fromDate:from, toDate:endDate, year,
+          notes:`استقطاع من الرصيد المرضي التراكمي${notes?' - '+notes:''}`});
+      }
+      if (fromHalf > 0) {
+        await addLeaveRecord({facultyId:currentFacultyId, type:'half',
+          days:fromHalf, fromDate:from, toDate:endDate, year,
+          notes:`إجازة مرضية بنصف الراتب${notes?' - '+notes:''}`});
+        showToast('⚠️ جزء من الإجازة سيكون بنصف الراتب', 'orange');
+      } else {
+        showToast('✅ تم الاستقطاع من الرصيد المرضي', 'green');
+      }
+      afterSaveLeave(false);
+    });
+    return;
   }
 }
 
