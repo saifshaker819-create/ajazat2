@@ -1218,12 +1218,12 @@
           <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;">⚙️ إعدادات النسخ التلقائي</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;">
-              <input type="checkbox" id="backup-auto-enabled" style="width:16px;height:16px;accent-color:#6366f1;">
+              <input type="checkbox" id="backup-auto-enabled" onchange="saveBackupSettings()" style="width:16px;height:16px;accent-color:#6366f1;">
               تفعيل النسخ التلقائي
             </label>
             <div style="display:flex;align-items:center;gap:8px;">
               <label style="font-size:13px;color:#64748b;font-weight:600;">كل</label>
-              <select id="backup-interval" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(99,102,241,0.2);background:rgba(255,255,255,0.8);font-family:inherit;font-size:13px;font-weight:600;color:#1e293b;outline:none;">
+              <select id="backup-interval" onchange="saveBackupSettings()" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(99,102,241,0.2);background:rgba(255,255,255,0.8);font-family:inherit;font-size:13px;font-weight:600;color:#1e293b;outline:none;">
                 <option value="30">30 دقيقة</option>
                 <option value="60" selected>ساعة</option>
                 <option value="120">ساعتان</option>
@@ -1232,18 +1232,13 @@
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
               <label style="font-size:13px;color:#64748b;font-weight:600;">الاحتفاظ بـ</label>
-              <select id="backup-keep" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(99,102,241,0.2);background:rgba(255,255,255,0.8);font-family:inherit;font-size:13px;font-weight:600;color:#1e293b;outline:none;">
+              <select id="backup-keep" onchange="saveBackupSettings()" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(99,102,241,0.2);background:rgba(255,255,255,0.8);font-family:inherit;font-size:13px;font-weight:600;color:#1e293b;outline:none;">
                 <option value="3">3 نسخ</option>
                 <option value="5" selected>5 نسخ</option>
                 <option value="10">10 نسخ</option>
                 <option value="30">30 نسخة</option>
               </select>
             </div>
-          </div>
-          <div style="margin-top:12px;display:flex;justify-content:flex-end;">
-            <button onclick="saveBackupSettings()" style="display:inline-flex;align-items:center;gap:7px;padding:8px 22px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,102,241,0.3);transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-              💾 حفظ الإعدادات
-            </button>
           </div>
         </div>
 
@@ -4043,12 +4038,10 @@ async function saveBackupSettings() {
 
   if (enabled && _backupDirHandle) {
     _startAutoBackup();
-    showToast(`✅ تم حفظ الإعدادات — النسخ التلقائي كل ${interval} دقيقة`, 'green');
-  } else if (enabled && !_backupDirHandle) {
-    showToast('✅ تم حفظ الإعدادات — اختر مجلداً لتفعيل النسخ التلقائي', 'green');
+    showToast(`✅ النسخ التلقائي كل ${interval} دقيقة`, 'green');
   } else {
     _stopAutoBackup();
-    showToast('✅ تم حفظ الإعدادات', 'green');
+    if (!enabled) showToast('⏸️ تم إيقاف النسخ التلقائي', 'orange');
   }
 }
 
