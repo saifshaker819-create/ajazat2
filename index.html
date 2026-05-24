@@ -3816,13 +3816,15 @@ function _fsApiSupported() {
 
 // --- تهيئة نظام الـ Backup عند تشغيل التطبيق ---
 async function initBackupSystem() {
-  // تحميل الإعدادات دائماً بغض النظر عن دعم الـ API
-  const savedSettings = await _fsGet('backup_settings');
-  if (savedSettings) {
-    _backupSettings = { ..._backupSettings, ...savedSettings };
-    // ensure enabled is boolean
-    _backupSettings.enabled = !!_backupSettings.enabled;
-  }
+  // تحميل الإعدادات من settings store (مضمون الحفظ)
+  try {
+    const savedEnabled  = await dbGetSetting('backup_enabled');
+    const savedInterval = await dbGetSetting('backup_interval');
+    const savedKeep     = await dbGetSetting('backup_keep');
+    if (savedEnabled  !== null) _backupSettings.enabled  = savedEnabled === true || savedEnabled === 'true';
+    if (savedInterval !== null) _backupSettings.interval = parseInt(savedInterval) || 60;
+    if (savedKeep     !== null) _backupSettings.keep     = parseInt(savedKeep)     || 5;
+  } catch(e) {}
 
   if (!_fsApiSupported()) {
     _setBadge('red', 'غير مدعوم — استخدم Chrome أو Edge');
@@ -4034,7 +4036,10 @@ async function saveBackupSettings() {
   const interval = parseInt(document.getElementById('backup-interval')?.value) || 60;
   const keep     = parseInt(document.getElementById('backup-keep')?.value) || 5;
   _backupSettings = { enabled, interval, keep };
-  await _fsPut('backup_settings', { enabled, interval, keep });
+  // حفظ في settings store (مضمون التخزين)
+  await dbSetSetting('backup_enabled',  enabled);
+  await dbSetSetting('backup_interval', interval);
+  await dbSetSetting('backup_keep',     keep);
 
   if (enabled && _backupDirHandle) {
     _startAutoBackup();
@@ -5366,22 +5371,7 @@ async function saveHourlyLeave() {
 let deferredPrompt = null;
 
 // إظهار تنبيه مشاركة الواتس اب عند إغلاق/تحديث الصفحة
-window.addEventListener('beforeunload', (e) => {
-  const phone = localStorage.getItem('wa_backup_phone') || '';
-  if (phone && typeof currentUser !== 'undefined' && currentUser) {
-    e.preventDefault();
-    e.returnValue = 'هل تريد مشاركة نسخة احتياطية قبل المغادرة؟';
-    // نحاول تنزيل نسخة في الخلفية
-    try {
-      const exportData = { version:1, exportDate:new Date().toISOString(), systemName:'نظام إجازات الموظفين', faculty, leaves };
-      const blob = new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'نظام_الاجازات_نسخة_احتياطية_auto.json';
-      a.click();
-    } catch(_) {}
-  }
-});
+
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
