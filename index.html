@@ -3399,19 +3399,15 @@ function printOfficialLetter(leaveId) {
 </body>
 </html>`;
 
-  // فتح نافذة جديدة تحتوي على الكتاب فقط وطباعتها
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const win  = window.open(url, '_blank', 'width=900,height=700');
+  // فتح نافذة جديدة وكتابة HTML مباشرة فيها (يعمل على file:// و http://)
+  const win = window.open('', '_blank', 'width=920,height=720');
   if (!win) {
-    // المتصفح حجب النافذة — fallback: فتح في تبويب جديد
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.click();
-    showToast('⚠️ اضغط Ctrl+P للطباعة بعد فتح الصفحة', 'orange');
+    showToast('⚠️ المتصفح حجب النافذة — يرجى السماح بالنوافذ المنبثقة', 'red');
+    return;
   }
-  setTimeout(() => URL.revokeObjectURL(url), 120000);
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 
 function letterTagHTML(lv) {
