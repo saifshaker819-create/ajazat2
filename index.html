@@ -386,35 +386,7 @@
   .backup-log-item .bl-icon { font-size:16px; flex-shrink:0; }
   .backup-log-item .bl-time { font-size:11px; color:#94a3b8; margin-right:auto; white-space:nowrap; }
 
-  /* ===== PRINT LETTER ===== */
-  #print-letter-container { display:none; }
-  @media print {
-    /* إخفاء كل شيء */
-    html, body { background:#fff !important; }
-    .sidebar, .main, #login-screen, #user-topbar,
-    #toast-container, #activity-panel, #pwa-install-btn,
-    #ios-install-banner, .modal-overlay, nav, header,
-    body > div:not(#print-letter-container) { display:none !important; visibility:hidden !important; }
-    /* إظهار الكتاب فقط */
-    #print-letter-container {
-      display:block !important;
-      visibility:visible !important;
-      position:fixed !important;
-      inset:0 !important;
-      z-index:999999 !important;
-      background:#fff !important;
-      padding:16mm 14mm !important;
-      font-family:'Cairo',sans-serif !important;
-      direction:rtl !important;
-      color:#1e293b !important;
-      overflow:visible !important;
-    }
-    #print-letter-container * {
-      visibility:visible !important;
-      -webkit-print-color-adjust:exact !important;
-      print-color-adjust:exact !important;
-    }
-  }
+  /* PRINT: uses Blob URL window.open - no CSS needed */
   ::-webkit-scrollbar-track { background:transparent; }
   ::-webkit-scrollbar-thumb { background:rgba(99,102,241,0.25); border-radius:10px; }
 
@@ -1826,24 +1798,7 @@
   </div>
 </div>
 
-<!-- WhatsApp Backup Modal (logout/close) -->
-<div class="modal-overlay" id="modal-wa-backup">
-  <div class="modal modal-sm">
-    <div style="text-align:center;margin-bottom:16px;">
-      <div style="font-size:44px;margin-bottom:8px;">📱</div>
-      <div style="font-size:17px;font-weight:800;color:#000;margin-bottom:6px;">مشاركة قاعدة البيانات؟</div>
-      <div style="font-size:14px;color:#64748b;line-height:1.6;">هل تريد تنزيل نسخة احتياطية ومشاركتها عبر واتس اب قبل المتابعة؟</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 4px 14px rgba(37,211,102,0.35);width:100%;justify-content:center;padding:13px;" onclick="confirmWaBackupAndProceed()">
-        📤 تنزيل ومشاركة عبر واتس اب
-      </button>
-      <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;" onclick="skipWaBackupAndProceed()">
-        ❌ لا، تخطي
-      </button>
-    </div>
-  </div>
-</div>
+
 
 <!-- Official Letters View Modal -->
 <div class="modal-overlay" id="modal-letters">
@@ -3426,28 +3381,37 @@ function printOfficialLetter(leaveId) {
 
 </div>
 
+<div style="text-align:center;margin:20px 0;padding:16px;">
+  <button onclick="window.print()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:16px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 4px 14px rgba(99,102,241,0.4);">
+    🖨️ طباعة الكتاب
+  </button>
+  <button onclick="window.close()" style="background:#f1f5f9;color:#475569;border:none;border-radius:12px;padding:12px 24px;font-size:15px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;margin-right:10px;">
+    ✕ إغلاق
+  </button>
+</div>
+
+<script>
+  // طباعة تلقائية بعد تحميل الخطوط
+  window.addEventListener('load', function() {
+    setTimeout(function() { window.print(); }, 800);
+  });
+<\/script>
 </body>
 </html>`;
 
-  // ضع محتوى الكتاب في div مخصص واطبع الصفحة
-  // CSS سيخفي كل شيء ما عدا هذا الـ div عند الطباعة
-  const printContainer = document.getElementById('print-letter-container');
-
-  // استخرج فقط محتوى الـ body من html المُنشأ
-  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  const bodyContent = bodyMatch ? bodyMatch[1] : html;
-
-  // أضف الـ styles من html المُنشأ داخل الـ container
-  const styleMatch = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-  const inlineStyle = styleMatch ? `<style>${styleMatch[1]}</style>` : '';
-
-  printContainer.innerHTML = inlineStyle + bodyContent;
-
-  // اطبع ثم امسح بعد الطباعة
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => { printContainer.innerHTML = ''; }, 1000);
-  }, 200);
+  // فتح نافذة جديدة تحتوي على الكتاب فقط وطباعتها
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank', 'width=900,height=700');
+  if (!win) {
+    // المتصفح حجب النافذة — fallback: فتح في تبويب جديد
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.click();
+    showToast('⚠️ اضغط Ctrl+P للطباعة بعد فتح الصفحة', 'orange');
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 120000);
 }
 
 function letterTagHTML(lv) {
@@ -5204,7 +5168,7 @@ async function _doLogoutNow() {
 }
 
 async function doLogout() {
-  openWaBackupDialog(_doLogoutNow);
+  showConfirm('هل تريد تسجيل الخروج؟', _doLogoutNow);
 }
 
 // ==================== CHANGE PASSWORD ====================
@@ -5487,97 +5451,7 @@ async function saveHourlyLeave() {
 }
 
 // ==================== WHATSAPP BACKUP ====================
-let _waBackupAction = null; // callback after wa dialog
 
-function saveWaPhone() {
-  const phone = document.getElementById('wa-phone')?.value?.trim();
-  if (phone) localStorage.setItem('wa_backup_phone', phone);
-}
-
-function loadWaPhone() {
-  const saved = localStorage.getItem('wa_backup_phone') || '';
-  const el = document.getElementById('wa-phone');
-  if (el) el.value = saved;
-}
-
-function getSavedWaPhone() {
-  return localStorage.getItem('wa_backup_phone') || '';
-}
-
-function generateDbBlob() {
-  const exportData = {
-    version: 1,
-    exportDate: new Date().toISOString(),
-    exportDateAr: new Date().toLocaleDateString('ar-IQ',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),
-    systemName: 'نظام إجازات الموظفين',
-    faculty, leaves,
-    stats: {
-      totalFaculty: faculty.length,
-      totalLeaves: leaves.filter(l=>l.type!=='cum-add').length,
-      totalDays: leaves.filter(l=>l.type!=='cum-add').reduce((s,l)=>s+l.days,0)
-    }
-  };
-  return new Blob([JSON.stringify(exportData,null,2)],{type:'application/json;charset=utf-8;'});
-}
-
-async function shareViaWhatsapp() {
-  const phone = document.getElementById('wa-phone')?.value?.trim() || getSavedWaPhone();
-  if (!phone) { showToast('⚠️ الرجاء إدخال رقم واتس اب أولاً', 'orange'); return; }
-  // تنزيل الملف
-  const blob = generateDbBlob();
-  const filename = `نظام_الاجازات_نسخة_احتياطية_${new Date().toISOString().split('T')[0]}.json`;
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  await dbSetSetting('lastExportDate', new Date().toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}));
-  // فتح واتس اب
-  setTimeout(() => {
-    const msg = encodeURIComponent(`مرحباً، إليك نسخة احتياطية من نظام إجازات الموظفين بتاريخ ${new Date().toLocaleDateString('ar-IQ')} - الرجاء الاحتفاظ بالملف المُرفق.`);
-    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-  }, 800);
-  showToast('✅ جارٍ فتح واتس اب — يرجى إرسال الملف المُنزَّل يدوياً', 'green');
-  await logActivity('📱 مشاركة قاعدة البيانات عبر واتس اب', 'green');
-  setTimeout(renderDbInfo, 600);
-}
-
-function openWaBackupDialog(action) {
-  _waBackupAction = action;
-  const phone = getSavedWaPhone();
-  if (!phone) {
-    // لا يوجد رقم محفوظ → نفّذ الإجراء مباشرة
-    if (_waBackupAction) { _waBackupAction(); _waBackupAction = null; }
-    return;
-  }
-  openModal('modal-wa-backup');
-}
-
-async function confirmWaBackupAndProceed() {
-  closeModal('modal-wa-backup');
-  // تنزيل وفتح واتس اب
-  const phone = getSavedWaPhone();
-  if (phone) {
-    const blob = generateDbBlob();
-    const filename = `نظام_الاجازات_نسخة_احتياطية_${new Date().toISOString().split('T')[0]}.json`;
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    await dbSetSetting('lastExportDate', new Date().toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}));
-    setTimeout(() => {
-      const msg = encodeURIComponent(`نسخة احتياطية من نظام إجازات الموظفين - ${new Date().toLocaleDateString('ar-IQ')}`);
-      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-    }, 600);
-  }
-  setTimeout(() => {
-    if (_waBackupAction) { _waBackupAction(); _waBackupAction = null; }
-  }, 800);
-}
-
-function skipWaBackupAndProceed() {
-  closeModal('modal-wa-backup');
-  if (_waBackupAction) { _waBackupAction(); _waBackupAction = null; }
-}
 
 // ==================== DISABLE DEVTOOLS SHORTCUTS ====================
 (function() {
