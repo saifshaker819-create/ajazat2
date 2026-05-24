@@ -437,6 +437,51 @@
   .badge-teal { background:rgba(20,184,166,0.1); color:#0d9488; }
   .half-salary-row td { color:#000 !important; font-weight:600; }
 
+  /* ===== OFFICIAL LETTERS SECTION ===== */
+  .letter-section {
+    margin-top:16px;
+    border:1.5px dashed rgba(99,102,241,0.3);
+    border-radius:14px;
+    padding:16px;
+    background:rgba(99,102,241,0.03);
+  }
+  .letter-section-title {
+    font-size:14px; font-weight:800; color:#4f46e5;
+    margin-bottom:12px; display:flex; align-items:center; gap:8px;
+  }
+  .letter-item {
+    background:rgba(255,255,255,0.7);
+    border:1px solid rgba(99,102,241,0.15);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:8px;
+    display:flex; align-items:flex-start; gap:10px;
+  }
+  .letter-item-icon { font-size:20px; flex-shrink:0; margin-top:2px; }
+  .letter-item-body { flex:1; }
+  .letter-item-num { font-size:14px; font-weight:800; color:#1e293b; }
+  .letter-item-date { font-size:12px; color:#64748b; margin-top:2px; }
+  .letter-item-subject { font-size:13px; color:#334155; margin-top:4px; line-height:1.5; }
+  .letter-item-actions { display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
+  .add-letter-btn {
+    display:flex; align-items:center; gap:6px;
+    padding:8px 14px; border-radius:9px;
+    background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(37,99,235,0.08));
+    border:1.5px dashed rgba(99,102,241,0.35);
+    color:#4f46e5; font-size:13px; font-weight:700;
+    cursor:pointer; font-family:inherit; width:100%;
+    justify-content:center; transition:all 0.2s;
+    margin-top:8px;
+  }
+  .add-letter-btn:hover { background:rgba(99,102,241,0.15); border-style:solid; }
+  .letters-view-tag {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:3px 9px; border-radius:20px;
+    background:rgba(99,102,241,0.1); color:#4f46e5;
+    font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .letters-view-tag:hover { background:rgba(99,102,241,0.2); }
+
   /* ===== LOGIN SCREEN ===== */
   #login-screen {
     position: fixed; inset: 0; z-index: 9000;
@@ -968,6 +1013,7 @@
               <th>الأيام</th>
               <th>السنة</th>
               <th>ملاحظات</th>
+              <th>📄 كتاب</th>
               <th>إجراء</th>
             </tr></thead>
             <tbody id="leaves-log-body"></tbody>
@@ -1142,6 +1188,30 @@
       <input class="form-input" id="l-notes" placeholder="ملاحظات إضافية (اختياري)">
     </div>
     <div id="leave-info-box" style="padding:12px 16px; border-radius:10px; background:rgba(99,102,241,0.07); border:1px solid rgba(99,102,241,0.12); font-size:13px; color:var(--text-mid); margin-bottom:4px; display:none;"></div>
+
+    <!-- قسم الكتاب الرسمي -->
+    <div class="letter-section">
+      <div class="letter-section-title">📄 الكتاب الرسمي / الوثيقة المرفقة <span style="font-weight:400;font-size:12px;color:#64748b;">(اختياري)</span></div>
+      <div class="form-grid">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">رقم الكتاب</label>
+          <input class="form-input" id="l-letter-num" placeholder="مثال: 1234">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">تاريخ الكتاب</label>
+          <input class="form-input" id="l-letter-date" type="date">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">عنوان / موضوع الكتاب</label>
+        <input class="form-input" id="l-letter-title" placeholder="مثال: طلب منح إجازة اعتيادية">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">ملاحظات الكتاب</label>
+        <input class="form-input" id="l-letter-notes" placeholder="تفاصيل إضافية عن الكتاب (اختياري)">
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="saveLeave()">💾 تسجيل الإجازة</button>
       <button class="btn btn-outline" onclick="closeModal('modal-leave')">إلغاء</button>
@@ -1185,6 +1255,30 @@
       <input class="form-input" id="el-notes" placeholder="ملاحظات إضافية (اختياري)">
     </div>
     <div id="ext-leave-info-box" style="padding:12px 16px;border-radius:10px;background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.12);font-size:13px;color:var(--text-mid);margin-bottom:4px;display:none;"></div>
+
+    <!-- قسم الكتاب الرسمي -->
+    <div class="letter-section">
+      <div class="letter-section-title">📄 الكتاب الرسمي / الوثيقة المرفقة <span style="font-weight:400;font-size:12px;color:#64748b;">(اختياري)</span></div>
+      <div class="form-grid">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">رقم الكتاب</label>
+          <input class="form-input" id="el-letter-num" placeholder="مثال: 1234">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">تاريخ الكتاب</label>
+          <input class="form-input" id="el-letter-date" type="date">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">عنوان / موضوع الكتاب</label>
+        <input class="form-input" id="el-letter-title" placeholder="مثال: طلب منح إجازة طويلة">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">ملاحظات الكتاب</label>
+        <input class="form-input" id="el-letter-notes" placeholder="تفاصيل إضافية عن الكتاب (اختياري)">
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="saveExtLeave()">💾 تسجيل الإجازة</button>
       <button class="btn btn-outline" onclick="closeModal('modal-extended-leave')">إلغاء</button>
@@ -1241,6 +1335,30 @@
       <input class="form-input" id="exc-notes" placeholder="سبب الاستثناء (اختياري)">
     </div>
     <div id="exc-info-box" style="padding:12px 16px;border-radius:10px;background:rgba(8,145,178,0.07);border:1px solid rgba(8,145,178,0.2);font-size:13px;color:#0891b2;margin-bottom:4px;display:none;"></div>
+
+    <!-- قسم الكتاب الرسمي -->
+    <div class="letter-section">
+      <div class="letter-section-title">📄 الكتاب الرسمي / الوثيقة المرفقة <span style="font-weight:400;font-size:12px;color:#64748b;">(اختياري)</span></div>
+      <div class="form-grid">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">رقم الكتاب</label>
+          <input class="form-input" id="exc-letter-num" placeholder="مثال: 1234">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">تاريخ الكتاب</label>
+          <input class="form-input" id="exc-letter-date" type="date">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">عنوان / موضوع الكتاب</label>
+        <input class="form-input" id="exc-letter-title" placeholder="مثال: قرار استثناء">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">ملاحظات الكتاب</label>
+        <input class="form-input" id="exc-letter-notes" placeholder="تفاصيل إضافية (اختياري)">
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn" style="background:linear-gradient(135deg,#0891b2,#0369a1);color:#fff;box-shadow:0 4px 14px rgba(8,145,178,0.3);" onclick="saveException()">💾 إضافة الأيام للرصيد</button>
       <button class="btn btn-outline" onclick="closeModal('modal-exception')">إلغاء</button>
@@ -1278,6 +1396,30 @@
       <input class="form-input" id="sl-notes" placeholder="ملاحظات إضافية (اختياري)">
     </div>
     <div id="sl-info-box" style="padding:12px 16px;border-radius:10px;background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.12);font-size:13px;margin-bottom:4px;display:none;"></div>
+
+    <!-- قسم الكتاب الرسمي -->
+    <div class="letter-section">
+      <div class="letter-section-title">📄 الكتاب الرسمي / الوثيقة المرفقة <span style="font-weight:400;font-size:12px;color:#64748b;">(اختياري)</span></div>
+      <div class="form-grid">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">رقم الكتاب</label>
+          <input class="form-input" id="sl-letter-num" placeholder="مثال: 1234">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">تاريخ الكتاب</label>
+          <input class="form-input" id="sl-letter-date" type="date">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">عنوان / موضوع الكتاب</label>
+        <input class="form-input" id="sl-letter-title" placeholder="مثال: طلب إجازة دراسية">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">ملاحظات الكتاب</label>
+        <input class="form-input" id="sl-letter-notes" placeholder="تفاصيل إضافية (اختياري)">
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,0.3);" onclick="saveStudyLeave()">💾 تسجيل الإجازة الدراسية</button>
       <button class="btn btn-outline" onclick="closeModal('modal-study-leave')">إلغاء</button>
@@ -1316,6 +1458,30 @@
       <input class="form-input" id="hl-notes" placeholder="ملاحظات إضافية (اختياري)">
     </div>
     <div id="hl-info-box" style="padding:12px 16px;border-radius:10px;background:rgba(20,184,166,0.07);border:1px solid rgba(20,184,166,0.2);font-size:13px;margin-bottom:4px;display:none;"></div>
+
+    <!-- قسم الكتاب الرسمي -->
+    <div class="letter-section">
+      <div class="letter-section-title">📄 الكتاب الرسمي / الوثيقة المرفقة <span style="font-weight:400;font-size:12px;color:#64748b;">(اختياري)</span></div>
+      <div class="form-grid">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">رقم الكتاب</label>
+          <input class="form-input" id="hl-letter-num" placeholder="مثال: 1234">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label class="form-label">تاريخ الكتاب</label>
+          <input class="form-input" id="hl-letter-date" type="date">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">عنوان / موضوع الكتاب</label>
+        <input class="form-input" id="hl-letter-title" placeholder="مثال: طلب إجازة زمنية">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">ملاحظات الكتاب</label>
+        <input class="form-input" id="hl-letter-notes" placeholder="تفاصيل إضافية (اختياري)">
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn" style="background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;box-shadow:0 4px 14px rgba(13,148,136,0.3);" onclick="saveHourlyLeave()">💾 تسجيل الإجازة الزمنية</button>
       <button class="btn btn-outline" onclick="closeModal('modal-hourly-leave')">إلغاء</button>
@@ -1458,6 +1624,21 @@
       <button class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;" onclick="skipWaBackupAndProceed()">
         ❌ لا، تخطي
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Official Letters View Modal -->
+<div class="modal-overlay" id="modal-letters">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">📄 الكتاب الرسمي المرفق بالإجازة</div>
+      <button class="modal-close" onclick="closeModal('modal-letters')">✕</button>
+    </div>
+    <div id="letters-modal-content" style="min-height:100px;"></div>
+    <div class="modal-footer">
+      <button id="btn-print-letter" class="btn btn-primary" style="display:none;gap:8px;" onclick="">🖨️ طباعة الكتاب</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-letters')">إغلاق</button>
     </div>
   </div>
 </div>
@@ -2036,7 +2217,7 @@ function renderProfile(id) {
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>#</th><th>نوع الإجازة</th><th>من</th><th>إلى</th><th>الأيام</th><th>السنة</th><th>ملاحظات</th><th>حذف</th>
+            <th>#</th><th>نوع الإجازة</th><th>من</th><th>إلى</th><th>الأيام</th><th>السنة</th><th>ملاحظات</th><th>📄 كتاب</th><th>حذف</th>
           </tr></thead>
           <tbody>
             ${fLeaves.filter(l=>l.type!=='normal-refund').length ? fLeaves.filter(l=>l.type!=='normal-refund').map((l,i)=>`
@@ -2048,9 +2229,10 @@ function renderProfile(id) {
                 <td><strong>${l.type==='hourly'?(l.hours||0)+' ساعة':l.days+' يوم'}</strong></td>
                 <td>${l.year}</td>
                 <td>${l.notes||'—'}</td>
+                <td>${letterTagHTML(l)}</td>
                 <td><button class="btn-icon" onclick="deleteLeave('${l.id}')" title="حذف">🗑️</button></td>
               </tr>`).join('') :
-              `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>لا توجد إجازات مسجلة لهذا الموظف</p></div></td></tr>`
+              `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📭</div><p>لا توجد إجازات مسجلة لهذا الموظف</p></div></td></tr>`
             }
           </tbody>
         </table>
@@ -2302,6 +2484,8 @@ function openAddLeave(type) {
   document.getElementById('l-to').value = '';
   document.getElementById('l-notes').value = '';
   document.getElementById('leave-info-box').style.display='none';
+  // مسح حقول الكتاب
+  ['l-letter-num','l-letter-date','l-letter-title','l-letter-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
 
   const ySelect = document.getElementById('l-year');
   const years = getYearsList();
@@ -2353,6 +2537,9 @@ async function saveLeave() {
 
   if (!from || !days || days < 1) { showToast('⚠️ الرجاء تعبئة التاريخ وعدد الأيام', 'red'); return; }
 
+  // جمع بيانات الكتاب الرسمي
+  const letterData = buildLetterData('l');
+
   const bal = getBalance(currentFacultyId, year);
   const cum = getCumBalance(currentFacultyId);
   const endDate = document.getElementById('l-to').value;
@@ -2362,7 +2549,7 @@ async function saveLeave() {
       showAlert('⚠️', 'انتهى الرصيد الاعتيادي', `هذا الموظف لا يمتلك رصيداً اعتيادياً لسنة ${year}.\nهل تريد قطع ${days} يوم من الرصيد التراكمي (${cum} يوم متاح)؟`, async (yes) => {
         if (!yes) return;
         if (days > cum) { showToast('❌ الرصيد التراكمي غير كافٍ', 'red'); return; }
-        await addLeaveRecord({facultyId:currentFacultyId, type:'cumulative', days, fromDate:from, toDate:endDate, year, notes});
+        await addLeaveRecord({facultyId:currentFacultyId, type:'cumulative', days, fromDate:from, toDate:endDate, year, notes, ...letterData});
         afterSaveLeave();
       });
       return;
@@ -2372,13 +2559,13 @@ async function saveLeave() {
       showAlert('⚠️', 'الرصيد الاعتيادي غير كافٍ', `يمتلك هذا الموظف ${bal.normal} يوم اعتيادي متبقٍ.\nهل تريد قطع ${overflow} يوم من الرصيد التراكمي (${cum} يوم متاح)؟`, async (yes) => {
         if (!yes) return;
         if (overflow > cum) { showToast('❌ الرصيد التراكمي غير كافٍ لتغطية الفرق', 'red'); return; }
-        await addLeaveRecord({facultyId:currentFacultyId, type:'normal', days:bal.normal, fromDate:from, toDate:endDate, year, notes});
-        await addLeaveRecord({facultyId:currentFacultyId, type:'cumulative', days:overflow, fromDate:from, toDate:endDate, year, notes:'امتداد من التراكمي'});
+        await addLeaveRecord({facultyId:currentFacultyId, type:'normal', days:bal.normal, fromDate:from, toDate:endDate, year, notes, ...letterData});
+        await addLeaveRecord({facultyId:currentFacultyId, type:'cumulative', days:overflow, fromDate:from, toDate:endDate, year, notes:'امتداد من التراكمي', ...letterData});
         afterSaveLeave();
       });
       return;
     }
-    await addLeaveRecord({facultyId:currentFacultyId, type:'normal', days, fromDate:from, toDate:endDate, year, notes});
+    await addLeaveRecord({facultyId:currentFacultyId, type:'normal', days, fromDate:from, toDate:endDate, year, notes, ...letterData});
     afterSaveLeave();
 
   } else {
@@ -2393,7 +2580,7 @@ async function saveLeave() {
 
     // الرصيد الاعتيادي كافٍ ← خصم مباشر بدون سؤال
     if (days <= sickAvail) {
-      await addLeaveRecord({facultyId:currentFacultyId, type:'sick', days, fromDate:from, toDate:endDate, year, notes});
+      await addLeaveRecord({facultyId:currentFacultyId, type:'sick', days, fromDate:from, toDate:endDate, year, notes, ...letterData});
       afterSaveLeave();
       return;
     }
@@ -2416,17 +2603,17 @@ async function saveLeave() {
       if (!yes) return;
       if (fromNormal > 0) {
         await addLeaveRecord({facultyId:currentFacultyId, type:'sick',
-          days:fromNormal, fromDate:from, toDate:endDate, year, notes});
+          days:fromNormal, fromDate:from, toDate:endDate, year, notes, ...letterData});
       }
       if (fromCum > 0) {
         await addLeaveRecord({facultyId:currentFacultyId, type:'sick-cum-deduct',
           days:fromCum, fromDate:from, toDate:endDate, year,
-          notes:`استقطاع من الرصيد المرضي التراكمي${notes?' - '+notes:''}`});
+          notes:`استقطاع من الرصيد المرضي التراكمي${notes?' - '+notes:''}`, ...letterData});
       }
       if (fromHalf > 0) {
         await addLeaveRecord({facultyId:currentFacultyId, type:'half',
           days:fromHalf, fromDate:from, toDate:endDate, year,
-          notes:`إجازة مرضية بنصف الراتب${notes?' - '+notes:''}`});
+          notes:`إجازة مرضية بنصف الراتب${notes?' - '+notes:''}`, ...letterData});
         showToast('⚠️ جزء من الإجازة سيكون بنصف الراتب', 'orange');
       } else {
         showToast('✅ تم الاستقطاع من الرصيد المرضي', 'green');
@@ -2447,6 +2634,227 @@ async function afterSaveLeave(showSuccessToast=true) {
   const typeName = typeMap[currentLeaveType] || currentLeaveType;
   const fac = faculty.find(f => f.id === currentFacultyId);
   await logActivity(`📅 تسجيل إجازة ${typeName} - ${fac?.name||''}`, 'blue');
+}
+
+// ==================== OFFICIAL LETTERS ====================
+function buildLetterData(prefix) {
+  const num   = (document.getElementById(prefix+'-letter-num')?.value||'').trim();
+  const date  = (document.getElementById(prefix+'-letter-date')?.value||'').trim();
+  const title = (document.getElementById(prefix+'-letter-title')?.value||'').trim();
+  const lnotes= (document.getElementById(prefix+'-letter-notes')?.value||'').trim();
+  if (!num && !date && !title && !lnotes) return {};
+  return { officialLetter: { num, date, title, notes: lnotes, addedAt: new Date().toISOString().split('T')[0] } };
+}
+
+function viewLeaveLetters(leaveId) {
+  const lv = leaves.find(l => l.id === leaveId);
+  if (!lv) return;
+  const letter = lv.officialLetter;
+  const typeMap = {normal:'اعتيادية', sick:'مرضية', cumulative:'تراكمية', half:'نصف راتب', long:'طويلة', fiveyear:'5 سنوات', prebirth:'قبل الوضع', postbirth:'بعد الوضع', maternity:'أمومة', 'maternity-ext':'تمديد أمومة', study:'دراسية', exception:'استثناء', hourly:'زمنية'};
+  const typeName = typeMap[lv.type] || lv.type;
+  const fac = faculty.find(f => f.id === lv.facultyId);
+  const content = document.getElementById('letters-modal-content');
+
+  if (!letter || (!letter.num && !letter.date && !letter.title && !letter.notes)) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>لا يوجد كتاب رسمي مرفق بهذه الإجازة</p></div>`;
+    // أخفِ زر الطباعة
+    document.getElementById('btn-print-letter').style.display = 'none';
+  } else {
+    content.innerHTML = `
+      <div style="background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:12px;padding:20px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(99,102,241,0.12);">
+          <span style="font-size:28px;">📄</span>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:#1e293b;">كتاب رسمي مرفق</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">إجازة ${typeName} | ${lv.fromDate} ← ${lv.toDate} | ${lv.type==='hourly'?(lv.hours||0)+' ساعة':lv.days+' يوم'}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          ${letter.num ? `<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">رقم الكتاب</div>
+            <div style="font-size:18px;font-weight:800;color:#4f46e5;">${letter.num}</div>
+          </div>` : ''}
+          ${letter.date ? `<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;">
+            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">تاريخ الكتاب</div>
+            <div style="font-size:15px;font-weight:700;color:#1e293b;">${letter.date}</div>
+          </div>` : ''}
+        </div>
+        ${letter.title ? `<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;margin-top:12px;">
+          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">الموضوع / العنوان</div>
+          <div style="font-size:14px;font-weight:600;color:#1e293b;line-height:1.6;">${letter.title}</div>
+        </div>` : ''}
+        ${letter.notes ? `<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;margin-top:12px;">
+          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">ملاحظات الكتاب</div>
+          <div style="font-size:13px;color:#334155;line-height:1.7;">${letter.notes}</div>
+        </div>` : ''}
+        ${letter.addedAt ? `<div style="font-size:11px;color:#94a3b8;margin-top:10px;text-align:left;">أُضيف في: ${letter.addedAt}</div>` : ''}
+      </div>`;
+    // أظهر زر الطباعة وخزّن الـ ID
+    const printBtn = document.getElementById('btn-print-letter');
+    printBtn.style.display = 'inline-flex';
+    printBtn.onclick = () => printOfficialLetter(leaveId);
+  }
+  openModal('modal-letters');
+}
+
+function printOfficialLetter(leaveId) {
+  const lv = leaves.find(l => l.id === leaveId);
+  if (!lv || !lv.officialLetter) return;
+  const letter = lv.officialLetter;
+  const typeMap = {normal:'اعتيادية', sick:'مرضية', cumulative:'تراكمية', half:'نصف راتب', long:'طويلة', fiveyear:'5 سنوات', prebirth:'قبل الوضع', postbirth:'بعد الوضع', maternity:'أمومة', 'maternity-ext':'تمديد أمومة', study:'دراسية', exception:'استثناء', hourly:'زمنية'};
+  const typeName = typeMap[lv.type] || lv.type;
+  const fac = faculty.find(f => f.id === lv.facultyId);
+  const daysText = lv.type === 'hourly' ? `${lv.hours||0} ساعة` : `${lv.days} يوم`;
+  const printDate = new Date().toLocaleDateString('ar-IQ', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  const html = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>كتاب رسمي - ${letter.num||''}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Cairo',sans-serif; background:#fff; color:#1e293b; direction:rtl; }
+  .page { width:210mm; min-height:297mm; margin:0 auto; padding:20mm 18mm; position:relative; }
+  .header { text-align:center; border-bottom:3px solid #4f46e5; padding-bottom:18px; margin-bottom:24px; }
+  .header-logo { font-size:40px; margin-bottom:6px; }
+  .header-title { font-size:20px; font-weight:800; color:#1e293b; }
+  .header-sub { font-size:13px; color:#64748b; margin-top:4px; }
+  .doc-title {
+    text-align:center; font-size:22px; font-weight:800; color:#4f46e5;
+    margin:20px 0 24px; padding:14px 0;
+    border-top:2px solid #e0e7ff; border-bottom:2px solid #e0e7ff;
+    letter-spacing:0.04em;
+  }
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+  .info-box {
+    border:1.5px solid #e0e7ff; border-radius:10px; padding:14px 16px;
+    background:#f8faff;
+  }
+  .info-box.full { grid-column:1/-1; }
+  .info-label { font-size:11px; font-weight:700; color:#6366f1; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.06em; }
+  .info-value { font-size:16px; font-weight:700; color:#1e293b; line-height:1.5; }
+  .info-value.big { font-size:22px; color:#4f46e5; }
+  .section { margin:20px 0; }
+  .section-title { font-size:13px; font-weight:800; color:#64748b; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .section-title::before { content:''; display:block; width:4px; height:16px; background:#4f46e5; border-radius:2px; }
+  .notes-box {
+    border:1.5px solid #fde68a; border-radius:10px; padding:14px 16px;
+    background:#fffbeb; font-size:14px; color:#334155; line-height:1.8;
+  }
+  .leave-summary {
+    background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+    border:1.5px solid #c7d2fe; border-radius:12px;
+    padding:16px 20px; margin:20px 0;
+    display:flex; align-items:center; gap:14px;
+  }
+  .leave-summary-icon { font-size:32px; }
+  .leave-summary-body { flex:1; }
+  .leave-summary-type { font-size:15px; font-weight:800; color:#4338ca; }
+  .leave-summary-detail { font-size:13px; color:#4f46e5; margin-top:3px; }
+  .footer {
+    margin-top:auto; padding-top:24px; border-top:1px solid #e2e8f0;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    font-size:12px; color:#94a3b8;
+  }
+  .signature-box { text-align:center; }
+  .signature-line { width:160px; height:1px; background:#cbd5e1; margin:40px auto 6px; }
+  .signature-label { font-size:12px; color:#64748b; font-weight:600; }
+  @media print {
+    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .page { padding:15mm 14mm; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-logo">📋</div>
+    <div class="header-title">نظام إجازات الموظفين</div>
+    <div class="header-sub">وثيقة كتاب رسمي مرفق بإجازة</div>
+  </div>
+
+  <div class="doc-title">📄 كتاب رسمي${letter.num ? ' رقم ' + letter.num : ''}</div>
+
+  <div class="info-grid">
+    ${letter.num ? `<div class="info-box">
+      <div class="info-label">رقم الكتاب</div>
+      <div class="info-value big">${letter.num}</div>
+    </div>` : ''}
+    ${letter.date ? `<div class="info-box">
+      <div class="info-label">تاريخ الكتاب</div>
+      <div class="info-value">${letter.date}</div>
+    </div>` : ''}
+    ${letter.title ? `<div class="info-box full">
+      <div class="info-label">الموضوع / العنوان</div>
+      <div class="info-value">${letter.title}</div>
+    </div>` : ''}
+  </div>
+
+  ${fac ? `<div class="section">
+    <div class="section-title">بيانات الموظف / التدريسي</div>
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-label">الاسم الكامل</div>
+        <div class="info-value">${fac.name}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">القسم</div>
+        <div class="info-value">${fac.dept||'—'}</div>
+      </div>
+      ${fac.empNo ? `<div class="info-box">
+        <div class="info-label">رقم التوظيف</div>
+        <div class="info-value">${fac.empNo}</div>
+      </div>` : ''}
+      ${fac.rank ? `<div class="info-box">
+        <div class="info-label">العنوان الوظيفي</div>
+        <div class="info-value">${fac.rank}</div>
+      </div>` : ''}
+    </div>
+  </div>` : ''}
+
+  <div class="leave-summary">
+    <div class="leave-summary-icon">📅</div>
+    <div class="leave-summary-body">
+      <div class="leave-summary-type">إجازة ${typeName}</div>
+      <div class="leave-summary-detail">من ${lv.fromDate} إلى ${lv.toDate} | المدة: ${daysText} | السنة: ${lv.year}</div>
+      ${lv.notes ? `<div class="leave-summary-detail" style="margin-top:4px;">ملاحظات الإجازة: ${lv.notes}</div>` : ''}
+    </div>
+  </div>
+
+  ${letter.notes ? `<div class="section">
+    <div class="section-title">ملاحظات الكتاب</div>
+    <div class="notes-box">${letter.notes}</div>
+  </div>` : ''}
+
+  <div class="footer">
+    <div>
+      <div>تاريخ الطباعة: ${printDate}</div>
+      ${letter.addedAt ? `<div style="margin-top:3px;">تاريخ إضافة الكتاب: ${letter.addedAt}</div>` : ''}
+    </div>
+    <div class="signature-box">
+      <div class="signature-line"></div>
+      <div class="signature-label">التوقيع والختم</div>
+    </div>
+  </div>
+
+</div>
+<script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) showToast('⚠️ فعّل النوافذ المنبثقة للطباعة', 'orange');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+function letterTagHTML(lv) {
+  if (!lv.officialLetter || (!lv.officialLetter.num && !lv.officialLetter.date && !lv.officialLetter.title)) return '';
+  return `<span class="letters-view-tag" onclick="viewLeaveLetters('${lv.id}')" title="عرض الكتاب الرسمي">📄 كتاب${lv.officialLetter.num?' #'+lv.officialLetter.num:''}</span>`;
 }
 
 async function addLeaveRecord(data) {
@@ -2509,6 +2917,7 @@ function renderLeavesLog() {
       <td><strong>${l.days}</strong></td>
       <td>${l.year}</td>
       <td>${l.notes||'—'}</td>
+      <td>${letterTagHTML(l)}</td>
       <td><button class="btn-icon" onclick="deleteLeave('${l.id}')" title="حذف">🗑️</button></td>
     </tr>`;
   }).join('');
@@ -3099,6 +3508,7 @@ function openException() {
   document.getElementById('exc-to').value = '';
   document.getElementById('exc-notes').value = '';
   document.getElementById('exc-info-box').style.display = 'none';
+  ['exc-letter-num','exc-letter-date','exc-letter-title','exc-letter-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('exc-year').innerHTML = years.map(y=>`<option value="${y}" ${y===cy?'selected':''}>${y}</option>`).join('');
   openModal('modal-exception');
 }
@@ -3111,11 +3521,13 @@ async function saveException() {
   const toVal = document.getElementById('exc-to').value;
   if (!from || !days || days < 1) { showToast('⚠️ الرجاء تعبئة التاريخ وعدد الأيام', 'red'); return; }
 
+  const letterData = buildLetterData('exc');
   const toDate = toVal || from;
   await addLeaveRecord({
     facultyId: currentFacultyId, type: 'exception',
     days, fromDate: from, toDate, year,
     notes: notes || `استثناء — إضافة ${days} يوم اعتيادية`,
+    ...letterData,
   });
 
   closeModal('modal-exception');
@@ -3135,6 +3547,7 @@ function openStudyLeave() {
   document.getElementById('sl-to').value   = '';
   document.getElementById('sl-notes').value = '';
   document.getElementById('sl-info-box').style.display = 'none';
+  ['sl-letter-num','sl-letter-date','sl-letter-title','sl-letter-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('sl-year').innerHTML = years.map(y=>`<option value="${y}" ${y===cy?'selected':''}>${y}</option>`).join('');
   openModal('modal-study-leave');
 }
@@ -3164,6 +3577,7 @@ async function saveStudyLeave() {
   const toDate = document.getElementById('sl-to').value;
   if (!from || !days || days < 1) { showToast('⚠️ الرجاء تعبئة التاريخ وعدد الأيام', 'red'); return; }
 
+  const letterData = buildLetterData('sl');
   const deductDays  = Math.floor(days / 10);
   const bal         = getBalance(currentFacultyId, year);
   const actualDeduct = Math.min(deductDays, bal.normal);
@@ -3173,6 +3587,7 @@ async function saveStudyLeave() {
     days, fromDate: from, toDate, year,
     notes: notes || 'إجازة دراسية',
     deductDays: actualDeduct, isActive: true, cutDate: null,
+    ...letterData,
   });
 
   if (actualDeduct > 0) {
@@ -3328,6 +3743,7 @@ function openExtLeave(type) {
   document.getElementById('el-notes').value = '';
   document.getElementById('el-to').value = '';
   document.getElementById('ext-leave-info-box').style.display = 'none';
+  ['el-letter-num','el-letter-date','el-letter-title','el-letter-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
 
   if (cfg.days) {
     document.getElementById('el-days').value = cfg.days;
@@ -3402,6 +3818,7 @@ async function saveExtLeave() {
 
   if (!from || !days || days < 1) { showToast('⚠️ الرجاء تعبئة التاريخ وعدد الأيام', 'red'); return; }
 
+  const letterData = buildLetterData('el');
   const cfg = EXT_LEAVE_CONFIG[currentExtLeaveType];
 
   // Calculate deductions from normal balance (1 day per every 10 days)
@@ -3420,6 +3837,7 @@ async function saveExtLeave() {
     deductDays: actualDeduct,  // how many normal days deducted
     isActive: true,
     cutDate: null,
+    ...letterData,
   });
 
   // Apply normal deduction records
@@ -3983,6 +4401,7 @@ function openHourlyLeave() {
   document.getElementById('hl-hours').value = '';
   document.getElementById('hl-notes').value = '';
   document.getElementById('hl-info-box').style.display = 'none';
+  ['hl-letter-num','hl-letter-date','hl-letter-title','hl-letter-notes'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('hl-year').innerHTML = years.map(y=>`<option value="${y}" ${y===cy?'selected':''}>${y}</option>`).join('');
   openModal('modal-hourly-leave');
 }
@@ -4026,6 +4445,8 @@ async function saveHourlyLeave() {
   if (!date || !hours || hours <= 0) { showToast('⚠️ الرجاء تعبئة التاريخ وعدد الساعات', 'red'); return; }
   if (!startTime) { showToast('⚠️ الرجاء تحديد وقت البداية', 'red'); return; }
 
+  const letterData = buildLetterData('hl');
+
   // احتساب الساعات المتراكمة قبل هذه الإجازة
   const allLeavesForFac = leaves.filter(l=>l.facultyId===currentFacultyId);
   const totalHoursBefore = allLeavesForFac.filter(l=>l.type==='hourly').reduce((s,l)=>s+(l.hours||0),0);
@@ -4043,6 +4464,7 @@ async function saveHourlyLeave() {
     fromDate: date, toDate: date, year,
     startTime,
     notes: notes || `إجازة زمنية ${hours} ساعة`,
+    ...letterData,
   });
 
   // إذا تجاوز المجموع حد الاستقطاع → سجّل استقطاع أيام اعتيادية
