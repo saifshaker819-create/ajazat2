@@ -3047,15 +3047,38 @@ function printOfficialLetter(leaveId) {
   </div>
 
 </div>
-<script>window.onload = () => { window.print(); }<\/script>
+
 </body>
 </html>`;
 
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const win = window.open(url, '_blank');
-  if (!win) showToast('⚠️ فعّل النوافذ المنبثقة للطباعة', 'orange');
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  // استخدام iframe مخفي للطباعة بدلاً من window.open (يعمل على الموبايل)
+  let iframe = document.getElementById('_print-iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = '_print-iframe';
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:210mm;height:297mm;border:none;visibility:hidden;';
+    document.body.appendChild(iframe);
+  }
+
+  // اكتب HTML في الـ iframe
+  const iDoc = iframe.contentDocument || iframe.contentWindow.document;
+  iDoc.open();
+  iDoc.write(html);
+  iDoc.close();
+
+  // انتظر تحميل الـ iframe ثم اطبع
+  iframe.onload = function() {
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch(e) {
+      // fallback: open in new tab
+      const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+  };
 }
 
 function letterTagHTML(lv) {
