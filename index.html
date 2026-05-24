@@ -3125,290 +3125,159 @@ function clearLetterFields(prefix) {
 
 function viewLeaveLetters(leaveId) {
   const lv = leaves.find(l => l.id === leaveId);
-  if (!lv) return;
+  if (!lv || !lv.officialLetter) return;
   const letter = lv.officialLetter;
-  const typeMap = {normal:'اعتيادية', sick:'مرضية', cumulative:'تراكمية', half:'نصف راتب', long:'طويلة', fiveyear:'5 سنوات', prebirth:'قبل الوضع', postbirth:'بعد الوضع', maternity:'أمومة', 'maternity-ext':'تمديد أمومة', study:'دراسية', exception:'استثناء', hourly:'زمنية'};
-  const typeName = typeMap[lv.type] || lv.type;
-  const fac = faculty.find(f => f.id === lv.facultyId);
-  const content = document.getElementById('letters-modal-content');
+  const att = letter.attachment;
 
-  if (!letter || (!letter.num && !letter.date && !letter.title && !letter.notes && !letter.attachment)) {
-    content.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>لا يوجد كتاب رسمي مرفق بهذه الإجازة</p></div>`;
-    // أخفِ زر الطباعة
-    document.getElementById('btn-print-letter').style.display = 'none';
-  } else {
-    content.innerHTML = `
-      <div style="background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:12px;padding:20px;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(99,102,241,0.12);">
-          <span style="font-size:28px;">📄</span>
-          <div>
-            <div style="font-size:15px;font-weight:800;color:#1e293b;">كتاب رسمي مرفق</div>
-            <div style="font-size:12px;color:#64748b;margin-top:2px;">إجازة ${typeName} | ${lv.fromDate} ← ${lv.toDate} | ${lv.type==='hourly'?(lv.hours||0)+' ساعة':lv.days+' يوم'}</div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          ${letter.num ? `<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;">
-            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">رقم الكتاب</div>
-            <div style="font-size:18px;font-weight:800;color:#4f46e5;">${letter.num}</div>
-          </div>` : ''}
-          ${letter.date ? `<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;">
-            <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">تاريخ الكتاب</div>
-            <div style="font-size:15px;font-weight:700;color:#1e293b;">${letter.date}</div>
-          </div>` : ''}
-        </div>
-        ${letter.title ? `<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;margin-top:12px;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">الموضوع / العنوان</div>
-          <div style="font-size:14px;font-weight:600;color:#1e293b;line-height:1.6;">${letter.title}</div>
-        </div>` : ''}
-        ${letter.notes ? `<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;margin-top:12px;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">ملاحظات الكتاب</div>
-          <div style="font-size:13px;color:#334155;line-height:1.7;">${letter.notes}</div>
-        </div>` : ''}
-        ${letter.addedAt ? `<div style="font-size:11px;color:#94a3b8;margin-top:10px;text-align:left;">أُضيف في: ${letter.addedAt}</div>` : ''}
-        ${letter.attachment ? (() => {
-          const att = letter.attachment;
-          const isImage = att.type && att.type.startsWith('image/');
-          const sizeKB = att.size ? (att.size/1024).toFixed(0) : '';
-          if (isImage) {
-            return `<div style="margin-top:14px;border-radius:10px;overflow:hidden;border:1px solid rgba(99,102,241,0.2);">
-              <div style="font-size:11px;font-weight:700;color:#64748b;padding:8px 12px;background:rgba(99,102,241,0.06);">📎 الوثيقة المرفقة</div>
-              <img src="${att.data}" style="width:100%;max-height:220px;object-fit:contain;display:block;background:#f8fafc;">
-              <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
-                <span style="font-size:12px;color:#64748b;">${att.name||'صورة'} ${sizeKB?'('+sizeKB+' KB)':''}</span>
-                <button onclick="downloadLetterAttachment('${leaveId}')" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⬇️ تنزيل</button>
-              </div>
-            </div>`;
-          } else {
-            return `<div style="margin-top:14px;border:1px solid rgba(239,68,68,0.2);border-radius:10px;overflow:hidden;">
-              <div style="font-size:11px;font-weight:700;color:#64748b;padding:8px 12px;background:rgba(239,68,68,0.05);">📎 الوثيقة المرفقة (PDF)</div>
-              <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;">
-                <span style="font-size:30px;">📑</span>
-                <div style="flex:1;">
-                  <div style="font-size:13px;font-weight:700;">${att.name||'ملف PDF'}</div>
-                  <div style="font-size:11px;color:#64748b;">${sizeKB?sizeKB+' KB':''}</div>
-                </div>
-                <button onclick="downloadLetterAttachment('${leaveId}')" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">⬇️ تنزيل</button>
-              </div>
-            </div>`;
-          }
-        })() : ''}
-      </div>`;
-    // أظهر زر الطباعة وخزّن الـ ID
-    const printBtn = document.getElementById('btn-print-letter');
-    printBtn.style.display = 'inline-flex';
-    printBtn.onclick = () => printOfficialLetter(leaveId);
-    // زر تنزيل الملف
-    const dlBtn = document.getElementById('btn-download-letter');
-    if (dlBtn) {
-      if (letter.attachment) { dlBtn.style.display='inline-flex'; dlBtn.onclick=()=>downloadLetterAttachment(leaveId); }
-      else dlBtn.style.display='none';
+  // إذا يوجد ملف مرفق — افتحه مباشرة في نافذة جديدة
+  if (att && att.data) {
+    const win = window.open('', '_blank', 'width=900,height=700');
+    if (!win) { showToast('⚠️ السماح بالنوافذ المنبثقة من إعدادات المتصفح', 'orange'); return; }
+
+    if (att.type && att.type.startsWith('image/')) {
+      // صورة — اعرضها مباشرة مع زر طباعة
+      win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>${att.name||'وثيقة'}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#1e1e1e;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Cairo,sans-serif;}
+  img{max-width:100%;max-height:90vh;object-fit:contain;display:block;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+  .bar{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.8);padding:12px;display:flex;gap:10px;justify-content:center;}
+  .bar button{padding:10px 24px;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;}
+  .btn-print{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;}
+  .btn-close{background:#374151;color:#fff;}
+  @media print{.bar{display:none;}body{background:#fff;}img{max-height:100vh;}}
+</style></head>
+<body>
+<img src="${att.data}" alt="${att.name||'وثيقة'}">
+<div class="bar">
+  <button class="btn-print" onclick="window.print()">🖨️ طباعة</button>
+  <button class="btn-close" onclick="window.close()">✕ إغلاق</button>
+</div>
+</body></html>`);
+      win.document.close();
+
+    } else if (att.type === 'application/pdf') {
+      // PDF — اعرضه مباشرة
+      win.document.write(`<!DOCTYPE html><html>
+<head><meta charset="UTF-8"><title>${att.name||'PDF'}</title>
+<style>*{margin:0;padding:0;}body{height:100vh;display:flex;flex-direction:column;}
+iframe{flex:1;border:none;}
+.bar{background:#374151;padding:10px;display:flex;gap:8px;justify-content:center;}
+.bar button{padding:8px 20px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;color:#fff;}
+.btn-print{background:#6366f1;}.btn-close{background:#6b7280;}
+@media print{.bar{display:none;}}
+</style></head>
+<body>
+<div class="bar">
+  <button class="btn-print" onclick="window.print()">🖨️ طباعة</button>
+  <button class="btn-close" onclick="window.close()">✕ إغلاق</button>
+</div>
+<iframe src="${att.data}"></iframe>
+</body></html>`);
+      win.document.close();
     }
+    return;
   }
-  openModal('modal-letters');
-}
 
-function downloadLetterAttachment(leaveId) {
-  const lv = leaves.find(l => l.id === leaveId);
-  if (!lv || !lv.officialLetter || !lv.officialLetter.attachment) return;
-  const att = lv.officialLetter.attachment;
-  const a = document.createElement('a');
-  a.href = att.data;
-  a.download = att.name || 'وثيقة';
-  a.click();
+  // لا يوجد ملف — اعرض المعلومات النصية في مودال بسيط
+  const typeMap = {normal:'اعتيادية',sick:'مرضية',cumulative:'تراكمية',half:'نصف راتب',long:'طويلة',fiveyear:'5 سنوات',prebirth:'قبل الوضع',postbirth:'بعد الوضع',maternity:'أمومة','maternity-ext':'تمديد أمومة',study:'دراسية',exception:'استثناء',hourly:'زمنية'};
+  const typeName = typeMap[lv.type] || lv.type;
+  const content2 = document.getElementById('letters-modal-content');
+  const printBtn = document.getElementById('btn-print-letter');
+  const dlBtn    = document.getElementById('btn-download-letter');
+
+  content2.innerHTML = `
+    <div style="background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:12px;padding:20px;">
+      <div style="font-size:13px;color:#64748b;margin-bottom:14px;">إجازة ${typeName} | ${lv.fromDate} ← ${lv.toDate}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        ${letter.num?`<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;"><div style="font-size:11px;color:#64748b;margin-bottom:4px;">رقم الكتاب</div><div style="font-size:18px;font-weight:800;color:#4f46e5;">${letter.num}</div></div>`:''}
+        ${letter.date?`<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;"><div style="font-size:11px;color:#64748b;margin-bottom:4px;">تاريخ الكتاب</div><div style="font-size:15px;font-weight:700;">${letter.date}</div></div>`:''}
+      </div>
+      ${letter.title?`<div style="background:#fff;border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:12px;margin-top:12px;"><div style="font-size:11px;color:#64748b;margin-bottom:4px;">الموضوع</div><div style="font-size:14px;font-weight:600;">${letter.title}</div></div>`:''}
+      ${letter.notes?`<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;margin-top:12px;"><div style="font-size:11px;color:#64748b;margin-bottom:4px;">ملاحظات</div><div style="font-size:13px;">${letter.notes}</div></div>`:''}
+    </div>`;
+
+  if (printBtn) { printBtn.style.display='inline-flex'; printBtn.onclick=()=>printOfficialLetter(leaveId); }
+  if (dlBtn) dlBtn.style.display='none';
+  openModal('modal-letters');
 }
 
 function printOfficialLetter(leaveId) {
   const lv = leaves.find(l => l.id === leaveId);
   if (!lv || !lv.officialLetter) return;
   const letter = lv.officialLetter;
-  const typeMap = {normal:'اعتيادية', sick:'مرضية', cumulative:'تراكمية', half:'نصف راتب', long:'طويلة', fiveyear:'5 سنوات', prebirth:'قبل الوضع', postbirth:'بعد الوضع', maternity:'أمومة', 'maternity-ext':'تمديد أمومة', study:'دراسية', exception:'استثناء', hourly:'زمنية'};
-  const typeName = typeMap[lv.type] || lv.type;
   const fac = faculty.find(f => f.id === lv.facultyId);
-  const daysText = lv.type === 'hourly' ? `${lv.hours||0} ساعة` : `${lv.days} يوم`;
-  const printDate = new Date().toLocaleDateString('ar-IQ', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  const typeMap = {normal:'اعتيادية',sick:'مرضية',cumulative:'تراكمية',half:'نصف راتب',long:'طويلة',fiveyear:'5 سنوات',prebirth:'قبل الوضع',postbirth:'بعد الوضع',maternity:'أمومة','maternity-ext':'تمديد أمومة',study:'دراسية',exception:'استثناء',hourly:'زمنية'};
+  const typeName = typeMap[lv.type] || lv.type;
+  const daysText = lv.type==='hourly'?`${lv.hours||0} ساعة`:`${lv.days} يوم`;
+  const printDate = new Date().toLocaleDateString('ar-IQ',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-  const html = `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<title>كتاب رسمي - ${letter.num||''}</title>
+  const html = `<!DOCTYPE html><html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>كتاب رسمي${letter.num?' - '+letter.num:''}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Cairo',sans-serif; background:#fff; color:#1e293b; direction:rtl; }
-  .page { width:210mm; min-height:297mm; margin:0 auto; padding:20mm 18mm; position:relative; }
-  .header { text-align:center; border-bottom:3px solid #4f46e5; padding-bottom:18px; margin-bottom:24px; }
-  .header-logo { font-size:40px; margin-bottom:6px; }
-  .header-title { font-size:20px; font-weight:800; color:#1e293b; }
-  .header-sub { font-size:13px; color:#64748b; margin-top:4px; }
-  .doc-title {
-    text-align:center; font-size:22px; font-weight:800; color:#4f46e5;
-    margin:20px 0 24px; padding:14px 0;
-    border-top:2px solid #e0e7ff; border-bottom:2px solid #e0e7ff;
-    letter-spacing:0.04em;
-  }
-  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
-  .info-box {
-    border:1.5px solid #e0e7ff; border-radius:10px; padding:14px 16px;
-    background:#f8faff;
-  }
-  .info-box.full { grid-column:1/-1; }
-  .info-label { font-size:11px; font-weight:700; color:#6366f1; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.06em; }
-  .info-value { font-size:16px; font-weight:700; color:#1e293b; line-height:1.5; }
-  .info-value.big { font-size:22px; color:#4f46e5; }
-  .section { margin:20px 0; }
-  .section-title { font-size:13px; font-weight:800; color:#64748b; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
-  .section-title::before { content:''; display:block; width:4px; height:16px; background:#4f46e5; border-radius:2px; }
-  .notes-box {
-    border:1.5px solid #fde68a; border-radius:10px; padding:14px 16px;
-    background:#fffbeb; font-size:14px; color:#334155; line-height:1.8;
-  }
-  .leave-summary {
-    background:linear-gradient(135deg,#eef2ff,#e0e7ff);
-    border:1.5px solid #c7d2fe; border-radius:12px;
-    padding:16px 20px; margin:20px 0;
-    display:flex; align-items:center; gap:14px;
-  }
-  .leave-summary-icon { font-size:32px; }
-  .leave-summary-body { flex:1; }
-  .leave-summary-type { font-size:15px; font-weight:800; color:#4338ca; }
-  .leave-summary-detail { font-size:13px; color:#4f46e5; margin-top:3px; }
-  .footer {
-    margin-top:auto; padding-top:24px; border-top:1px solid #e2e8f0;
-    display:flex; justify-content:space-between; align-items:flex-end;
-    font-size:12px; color:#94a3b8;
-  }
-  .signature-box { text-align:center; }
-  .signature-line { width:160px; height:1px; background:#cbd5e1; margin:40px auto 6px; }
-  .signature-label { font-size:12px; color:#64748b; font-weight:600; }
-  @media print {
-    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .page { padding:15mm 14mm; }
-  }
-</style>
-</head>
-<body>
-<div class="page">
-
-  <div class="header">
-    <div class="header-logo">📋</div>
-    <div class="header-title">نظام إجازات الموظفين</div>
-    <div class="header-sub">وثيقة كتاب رسمي مرفق بإجازة</div>
-  </div>
-
-  <div class="doc-title">📄 كتاب رسمي${letter.num ? ' رقم ' + letter.num : ''}</div>
-
-  <div class="info-grid">
-    ${letter.num ? `<div class="info-box">
-      <div class="info-label">رقم الكتاب</div>
-      <div class="info-value big">${letter.num}</div>
-    </div>` : ''}
-    ${letter.date ? `<div class="info-box">
-      <div class="info-label">تاريخ الكتاب</div>
-      <div class="info-value">${letter.date}</div>
-    </div>` : ''}
-    ${letter.title ? `<div class="info-box full">
-      <div class="info-label">الموضوع / العنوان</div>
-      <div class="info-value">${letter.title}</div>
-    </div>` : ''}
-  </div>
-
-  ${fac ? `<div class="section">
-    <div class="section-title">بيانات الموظف / التدريسي</div>
-    <div class="info-grid">
-      <div class="info-box">
-        <div class="info-label">الاسم الكامل</div>
-        <div class="info-value">${fac.name}</div>
-      </div>
-      <div class="info-box">
-        <div class="info-label">القسم</div>
-        <div class="info-value">${fac.dept||'—'}</div>
-      </div>
-      ${fac.empNo ? `<div class="info-box">
-        <div class="info-label">رقم التوظيف</div>
-        <div class="info-value">${fac.empNo}</div>
-      </div>` : ''}
-      ${fac.rank ? `<div class="info-box">
-        <div class="info-label">العنوان الوظيفي</div>
-        <div class="info-value">${fac.rank}</div>
-      </div>` : ''}
-    </div>
-  </div>` : ''}
-
-  <div class="leave-summary">
-    <div class="leave-summary-icon">📅</div>
-    <div class="leave-summary-body">
-      <div class="leave-summary-type">إجازة ${typeName}</div>
-      <div class="leave-summary-detail">من ${lv.fromDate} إلى ${lv.toDate} | المدة: ${daysText} | السنة: ${lv.year}</div>
-      ${lv.notes ? `<div class="leave-summary-detail" style="margin-top:4px;">ملاحظات الإجازة: ${lv.notes}</div>` : ''}
-    </div>
-  </div>
-
-  ${letter.notes ? `<div class="section">
-    <div class="section-title">ملاحظات الكتاب</div>
-    <div class="notes-box">${letter.notes}</div>
-  </div>` : ''}
-
-  ${letter.attachment && letter.attachment.type && letter.attachment.type.startsWith('image/') ? `<div class="section">
-    <div class="section-title">الوثيقة المرفقة</div>
-    <div style="border:1.5px solid #e0e7ff;border-radius:12px;overflow:hidden;margin-top:6px;">
-      <img src="${letter.attachment.data}" style="width:100%;max-height:320px;object-fit:contain;display:block;background:#f8fafc;">
-      <div style="padding:8px 12px;font-size:12px;color:#64748b;background:#f8fafc;">${letter.attachment.name||'وثيقة مرفقة'}</div>
-    </div>
-  </div>` : ''}
-
-  ${letter.attachment && letter.attachment.type === 'application/pdf' ? `<div class="section">
-    <div class="section-title">الوثيقة المرفقة</div>
-    <div style="border:1.5px solid #fee2e2;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;background:#fff5f5;">
-      <span style="font-size:32px;">📑</span>
-      <div>
-        <div style="font-weight:800;font-size:14px;">${letter.attachment.name||'ملف PDF'}</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px;">ملف PDF مرفق — يرجى الرجوع إلى الملف الرقمي لعرضه</div>
-      </div>
-    </div>
-  </div>` : ''}
-
-  <div class="footer">
-    <div>
-      <div>تاريخ الطباعة: ${printDate}</div>
-      ${letter.addedAt ? `<div style="margin-top:3px;">تاريخ إضافة الكتاب: ${letter.addedAt}</div>` : ''}
-    </div>
-    <div class="signature-box">
-      <div class="signature-line"></div>
-      <div class="signature-label">التوقيع والختم</div>
-    </div>
-  </div>
-
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Cairo,sans-serif;background:#fff;color:#1e293b;direction:rtl;}
+.page{width:210mm;min-height:297mm;margin:0 auto;padding:18mm 16mm;display:flex;flex-direction:column;}
+.header{text-align:center;border-bottom:3px solid #4f46e5;padding-bottom:16px;margin-bottom:20px;}
+.header h1{font-size:20px;font-weight:800;color:#1e293b;margin-top:6px;}
+.header p{font-size:12px;color:#64748b;margin-top:3px;}
+.title{text-align:center;font-size:22px;font-weight:800;color:#4f46e5;margin:18px 0;padding:12px 0;border-top:2px solid #e0e7ff;border-bottom:2px solid #e0e7ff;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.box{border:1.5px solid #e0e7ff;border-radius:10px;padding:12px 14px;background:#f8faff;}
+.box.full{grid-column:1/-1;}
+.box-label{font-size:10px;font-weight:700;color:#6366f1;margin-bottom:4px;text-transform:uppercase;}
+.box-value{font-size:16px;font-weight:700;color:#1e293b;}
+.box-value.big{font-size:24px;color:#4f46e5;}
+.leave-box{background:linear-gradient(135deg,#eef2ff,#e0e7ff);border:1.5px solid #c7d2fe;border-radius:12px;padding:14px 18px;margin:16px 0;display:flex;align-items:center;gap:12px;}
+.leave-type{font-size:15px;font-weight:800;color:#4338ca;}
+.leave-detail{font-size:12px;color:#4f46e5;margin-top:3px;}
+.notes{border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px;background:#fffbeb;font-size:13px;line-height:1.8;margin:12px 0;}
+.att-img{border:1.5px solid #e0e7ff;border-radius:10px;overflow:hidden;margin:12px 0;text-align:center;}
+.att-img img{max-width:100%;max-height:280px;object-fit:contain;display:block;}
+.footer{margin-top:auto;padding-top:20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;}
+.sig{text-align:center;}
+.sig-line{width:140px;height:1px;background:#cbd5e1;margin:36px auto 5px;}
+.no-print{text-align:center;margin:20px 0;}
+.no-print button{padding:10px 28px;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;margin:0 5px;}
+.btn-p{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;}
+.btn-c{background:#f1f5f9;color:#475569;}
+@media print{.no-print{display:none;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+</style></head>
+<body><div class="page">
+<div class="header"><div style="font-size:36px;">📋</div><h1>نظام إجازات الموظفين</h1><p>وثيقة كتاب رسمي مرفق بإجازة</p></div>
+<div class="title">📄 كتاب رسمي${letter.num?' رقم '+letter.num:''}</div>
+<div class="grid">
+  ${letter.num?`<div class="box"><div class="box-label">رقم الكتاب</div><div class="box-value big">${letter.num}</div></div>`:''}
+  ${letter.date?`<div class="box"><div class="box-label">تاريخ الكتاب</div><div class="box-value">${letter.date}</div></div>`:''}
+  ${letter.title?`<div class="box full"><div class="box-label">الموضوع / العنوان</div><div class="box-value">${letter.title}</div></div>`:''}
 </div>
-
-<div style="text-align:center;margin:20px 0;padding:16px;">
-  <button onclick="window.print()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:16px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;box-shadow:0 4px 14px rgba(99,102,241,0.4);">
-    🖨️ طباعة الكتاب
-  </button>
-  <button onclick="window.close()" style="background:#f1f5f9;color:#475569;border:none;border-radius:12px;padding:12px 24px;font-size:15px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;margin-right:10px;">
-    ✕ إغلاق
-  </button>
+${fac?`<div class="grid">
+  <div class="box"><div class="box-label">الاسم الكامل</div><div class="box-value">${fac.name}</div></div>
+  <div class="box"><div class="box-label">القسم</div><div class="box-value">${fac.dept||'—'}</div></div>
+  ${fac.empNo?`<div class="box"><div class="box-label">رقم التوظيف</div><div class="box-value">${fac.empNo}</div></div>`:''}
+  ${fac.rank?`<div class="box"><div class="box-label">العنوان الوظيفي</div><div class="box-value">${fac.rank}</div></div>`:''}
+</div>`:''}
+<div class="leave-box"><div style="font-size:28px;">📅</div><div><div class="leave-type">إجازة ${typeName}</div><div class="leave-detail">من ${lv.fromDate} إلى ${lv.toDate} | ${daysText} | ${lv.year}</div></div></div>
+${letter.notes?`<div class="notes">${letter.notes}</div>`:''}
+${letter.attachment&&letter.attachment.type&&letter.attachment.type.startsWith('image/')?`<div class="att-img"><img src="${letter.attachment.data}"><div style="padding:6px 10px;font-size:11px;color:#64748b;background:#f8fafc;">${letter.attachment.name||'وثيقة مرفقة'}</div></div>`:''}
+<div class="footer"><div><div>تاريخ الطباعة: ${printDate}</div>${letter.addedAt?`<div style="margin-top:2px;">تاريخ الإضافة: ${letter.addedAt}</div>`:''}</div><div class="sig"><div class="sig-line"></div><div>التوقيع والختم</div></div></div>
 </div>
+<div class="no-print">
+  <button class="btn-p" onclick="window.print()">🖨️ طباعة</button>
+  <button class="btn-c" onclick="window.close()">✕ إغلاق</button>
+</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
+</body></html>`;
 
-<script>
-  // طباعة تلقائية بعد تحميل الخطوط
-  window.addEventListener('load', function() {
-    setTimeout(function() { window.print(); }, 800);
-  });
-<\/script>
-</body>
-</html>`;
-
-  // فتح نافذة جديدة وكتابة HTML مباشرة فيها (يعمل على file:// و http://)
-  const win = window.open('', '_blank', 'width=920,height=720');
-  if (!win) {
-    showToast('⚠️ المتصفح حجب النافذة — يرجى السماح بالنوافذ المنبثقة', 'red');
-    return;
-  }
+  const win = window.open('','_blank','width=920,height=720');
+  if (!win){showToast('⚠️ السماح بالنوافذ المنبثقة من إعدادات المتصفح','red');return;}
   win.document.open();
   win.document.write(html);
   win.document.close();
 }
+
 
 function letterTagHTML(lv) {
   if (!lv.officialLetter) return '';
@@ -3947,14 +3816,19 @@ function _fsApiSupported() {
 
 // --- تهيئة نظام الـ Backup عند تشغيل التطبيق ---
 async function initBackupSystem() {
-  if (!_fsApiSupported()) {
-    _setBadge('red', 'غير مدعوم في هذا المتصفح');
-    return;
+  // تحميل الإعدادات دائماً بغض النظر عن دعم الـ API
+  const savedSettings = await _fsGet('backup_settings');
+  if (savedSettings) {
+    _backupSettings = { ..._backupSettings, ...savedSettings };
+    // ensure enabled is boolean
+    _backupSettings.enabled = !!_backupSettings.enabled;
   }
 
-  // تحميل الإعدادات
-  const savedSettings = await _fsGet('backup_settings');
-  if (savedSettings) _backupSettings = { ..._backupSettings, ...savedSettings };
+  if (!_fsApiSupported()) {
+    _setBadge('red', 'غير مدعوم — استخدم Chrome أو Edge');
+    _renderBackupUI();
+    return;
+  }
 
   // جلب الـ handle المحفوظ
   const savedHandle = await _fsGet('backup_dir_handle');
@@ -3971,7 +3845,7 @@ async function initBackupSystem() {
   // تحديث الواجهة
   _renderBackupUI();
 
-  // تشغيل التلقائي إن كان مفعلاً
+  // تشغيل التلقائي إن كان مفعلاً ويوجد مجلد
   if (_backupSettings.enabled && _backupDirHandle) _startAutoBackup();
 }
 
@@ -4156,11 +4030,11 @@ function _stopAutoBackup() {
 
 // --- حفظ الإعدادات ---
 async function saveBackupSettings() {
-  const enabled  = document.getElementById('backup-auto-enabled')?.checked || false;
+  const enabled  = document.getElementById('backup-auto-enabled')?.checked === true;
   const interval = parseInt(document.getElementById('backup-interval')?.value) || 60;
   const keep     = parseInt(document.getElementById('backup-keep')?.value) || 5;
   _backupSettings = { enabled, interval, keep };
-  await _fsPut('backup_settings', _backupSettings);
+  await _fsPut('backup_settings', { enabled, interval, keep });
 
   if (enabled && _backupDirHandle) {
     _startAutoBackup();
@@ -4246,13 +4120,13 @@ function _renderBackupUI() {
     ? `✅ الملفات ستُحفظ في: ${_backupDirHandle.name}`
     : 'اختر مجلداً على جهازك مثل: D:\\BackupFolder';
 
-  // إعدادات
+  // إعدادات — طبّق القيم المحفوظة على عناصر الواجهة
   const autoChk = document.getElementById('backup-auto-enabled');
   const intSel  = document.getElementById('backup-interval');
   const keepSel = document.getElementById('backup-keep');
-  if (autoChk) autoChk.checked = _backupSettings.enabled;
-  if (intSel)  intSel.value    = _backupSettings.interval;
-  if (keepSel) keepSel.value   = _backupSettings.keep;
+  if (autoChk) autoChk.checked         = !!_backupSettings.enabled;
+  if (intSel)  intSel.value            = _backupSettings.interval  || 60;
+  if (keepSel) keepSel.value           = _backupSettings.keep      || 5;
 
   // تحذير HTTPS
   const warn = document.getElementById('backup-https-warn');
