@@ -2779,7 +2779,7 @@ function buildLetterData(prefix) {
   const lnotes= (document.getElementById(prefix+'-letter-notes')?.value||'').trim();
   const attachment = _letterFiles[prefix] || null;
   if (!num && !date && !title && !lnotes && !attachment) return {};
-  return { officialLetter: { num, date, title, notes: lnotes, addedAt: new Date().toISOString().split('T')[0], attachment } };
+  return { officialLetter: { num, date, title, notes: lnotes, addedAt: new Date().toISOString().split('T')[0], attachment: attachment || null } };
 }
 
 function clearLetterFields(prefix) {
@@ -2799,7 +2799,7 @@ function viewLeaveLetters(leaveId) {
   const fac = faculty.find(f => f.id === lv.facultyId);
   const content = document.getElementById('letters-modal-content');
 
-  if (!letter || (!letter.num && !letter.date && !letter.title && !letter.notes)) {
+  if (!letter || (!letter.num && !letter.date && !letter.title && !letter.notes && !letter.attachment)) {
     content.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>لا يوجد كتاب رسمي مرفق بهذه الإجازة</p></div>`;
     // أخفِ زر الطباعة
     document.getElementById('btn-print-letter').style.display = 'none';
@@ -3059,8 +3059,11 @@ function printOfficialLetter(leaveId) {
 }
 
 function letterTagHTML(lv) {
-  if (!lv.officialLetter || (!lv.officialLetter.num && !lv.officialLetter.date && !lv.officialLetter.title)) return '';
-  return `<span class="letters-view-tag" onclick="viewLeaveLetters('${lv.id}')" title="عرض الكتاب الرسمي">📄 كتاب${lv.officialLetter.num?' #'+lv.officialLetter.num:''}</span>`;
+  if (!lv.officialLetter) return '';
+  const L = lv.officialLetter;
+  if (!L.num && !L.date && !L.title && !L.notes && !L.attachment) return '';
+  const label = L.num ? ' #'+L.num : (L.attachment ? ' 📎' : '');
+  return `<span class="letters-view-tag" onclick="viewLeaveLetters('${lv.id}')" title="عرض الكتاب الرسمي">📄 كتاب${label}</span>`;
 }
 
 async function addLeaveRecord(data) {
