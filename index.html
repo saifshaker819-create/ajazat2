@@ -1218,12 +1218,12 @@
           <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;">⚙️ إعدادات النسخ التلقائي</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;">
-              <input type="checkbox" id="backup-auto-enabled" onchange="saveBackupSettings()" style="width:16px;height:16px;accent-color:#6366f1;">
+              <input type="checkbox" id="backup-auto-enabled" style="width:16px;height:16px;accent-color:#6366f1;">
               تفعيل النسخ التلقائي
             </label>
             <div style="display:flex;align-items:center;gap:8px;">
               <label style="font-size:13px;color:#64748b;font-weight:600;">كل</label>
-              <select id="backup-interval" onchange="saveBackupSettings()" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(99,102,241,0.2);background:rgba(255,255,255,0.8);font-family:inherit;font-size:13px;font-weight:600;color:#1e293b;outline:none;">
+              <select id="backup-interval" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(99,102,241,0.2);background:rgba(255,255,255,0.8);font-family:inherit;font-size:13px;font-weight:600;color:#1e293b;outline:none;">
                 <option value="30">30 دقيقة</option>
                 <option value="60" selected>ساعة</option>
                 <option value="120">ساعتان</option>
@@ -1232,13 +1232,18 @@
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
               <label style="font-size:13px;color:#64748b;font-weight:600;">الاحتفاظ بـ</label>
-              <select id="backup-keep" onchange="saveBackupSettings()" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(99,102,241,0.2);background:rgba(255,255,255,0.8);font-family:inherit;font-size:13px;font-weight:600;color:#1e293b;outline:none;">
+              <select id="backup-keep" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(99,102,241,0.2);background:rgba(255,255,255,0.8);font-family:inherit;font-size:13px;font-weight:600;color:#1e293b;outline:none;">
                 <option value="3">3 نسخ</option>
                 <option value="5" selected>5 نسخ</option>
                 <option value="10">10 نسخ</option>
                 <option value="30">30 نسخة</option>
               </select>
             </div>
+          </div>
+          <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+            <button onclick="saveBackupSettings()" style="display:inline-flex;align-items:center;gap:7px;padding:8px 22px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(99,102,241,0.3);transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+              💾 حفظ الإعدادات
+            </button>
           </div>
         </div>
 
@@ -3816,15 +3821,13 @@ function _fsApiSupported() {
 
 // --- تهيئة نظام الـ Backup عند تشغيل التطبيق ---
 async function initBackupSystem() {
-  // تحميل الإعدادات من settings store (مضمون الحفظ)
-  try {
-    const savedEnabled  = await dbGetSetting('backup_enabled');
-    const savedInterval = await dbGetSetting('backup_interval');
-    const savedKeep     = await dbGetSetting('backup_keep');
-    if (savedEnabled  !== null) _backupSettings.enabled  = savedEnabled === true || savedEnabled === 'true';
-    if (savedInterval !== null) _backupSettings.interval = parseInt(savedInterval) || 60;
-    if (savedKeep     !== null) _backupSettings.keep     = parseInt(savedKeep)     || 5;
-  } catch(e) {}
+  // تحميل الإعدادات دائماً بغض النظر عن دعم الـ API
+  const savedSettings = await _fsGet('backup_settings');
+  if (savedSettings) {
+    _backupSettings = { ..._backupSettings, ...savedSettings };
+    // ensure enabled is boolean
+    _backupSettings.enabled = !!_backupSettings.enabled;
+  }
 
   if (!_fsApiSupported()) {
     _setBadge('red', 'غير مدعوم — استخدم Chrome أو Edge');
@@ -4036,17 +4039,16 @@ async function saveBackupSettings() {
   const interval = parseInt(document.getElementById('backup-interval')?.value) || 60;
   const keep     = parseInt(document.getElementById('backup-keep')?.value) || 5;
   _backupSettings = { enabled, interval, keep };
-  // حفظ في settings store (مضمون التخزين)
-  await dbSetSetting('backup_enabled',  enabled);
-  await dbSetSetting('backup_interval', interval);
-  await dbSetSetting('backup_keep',     keep);
+  await _fsPut('backup_settings', { enabled, interval, keep });
 
   if (enabled && _backupDirHandle) {
     _startAutoBackup();
-    showToast(`✅ النسخ التلقائي كل ${interval} دقيقة`, 'green');
+    showToast(`✅ تم حفظ الإعدادات — النسخ التلقائي كل ${interval} دقيقة`, 'green');
+  } else if (enabled && !_backupDirHandle) {
+    showToast('✅ تم حفظ الإعدادات — اختر مجلداً لتفعيل النسخ التلقائي', 'green');
   } else {
     _stopAutoBackup();
-    if (!enabled) showToast('⏸️ تم إيقاف النسخ التلقائي', 'orange');
+    showToast('✅ تم حفظ الإعدادات', 'green');
   }
 }
 
@@ -5371,7 +5373,22 @@ async function saveHourlyLeave() {
 let deferredPrompt = null;
 
 // إظهار تنبيه مشاركة الواتس اب عند إغلاق/تحديث الصفحة
-
+window.addEventListener('beforeunload', (e) => {
+  const phone = localStorage.getItem('wa_backup_phone') || '';
+  if (phone && typeof currentUser !== 'undefined' && currentUser) {
+    e.preventDefault();
+    e.returnValue = 'هل تريد مشاركة نسخة احتياطية قبل المغادرة؟';
+    // نحاول تنزيل نسخة في الخلفية
+    try {
+      const exportData = { version:1, exportDate:new Date().toISOString(), systemName:'نظام إجازات الموظفين', faculty, leaves };
+      const blob = new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'نظام_الاجازات_نسخة_احتياطية_auto.json';
+      a.click();
+    } catch(_) {}
+  }
+});
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
