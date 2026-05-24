@@ -1208,7 +1208,7 @@
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <div style="flex:1;min-width:180px;font-size:14px;font-weight:700;color:#1e293b;" id="backup-folder-name">لم يتم اختيار مجلد بعد</div>
             <button class="btn btn-outline btn-sm" onclick="chooseBackupFolder()" id="btn-choose-folder">📂 اختيار مجلد</button>
-            <button class="btn btn-sm" onclick="grantBackupPermission()" id="btn-grant-permission" style="display:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;font-weight:700;gap:6px;">🔓 منح الإذن للمجلد</button>
+            <button onclick="grantBackupPermission()" id="btn-grant-permission" style="display:none;padding:6px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:none;align-items:center;gap:6px;">🔓 منح الإذن للمجلد</button>
             <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);" onclick="clearBackupFolder()" id="btn-clear-folder" style="display:none;">✕ إلغاء</button>
           </div>
           <div style="font-size:11px;color:#94a3b8;margin-top:6px;" id="backup-folder-hint">اختر مجلداً على جهازك مثل: D:\BackupFolder — سيتم حفظ النسخ هناك تلقائياً</div>
@@ -3777,7 +3777,7 @@ async function renderDbInfo() {
 let _backupDirHandle = null;       // FileSystemDirectoryHandle الحالي
 let _backupTimer = null;           // setInterval للنسخ التلقائي
 let _backupSettings = { enabled: false, interval: 60, keep: 5 };
-let _backupNeedsPermission = false; // true إذا كان المجلد محفوظاً لكن يحتاج إذن بعد ريفريش
+let _backupNeedsPermission = false;
 
 // --- IDB helpers خاصة بـ fs_handles ---
 function _fsGet(key) {
@@ -3835,10 +3835,20 @@ async function initBackupSystem() {
   // جلب الـ handle المحفوظ
   const savedHandle = await _fsGet('backup_dir_handle');
   if (savedHandle) {
-    const ok = await _verifyAndRestoreHandle(savedHandle);
-    if (!ok) {
-      _setBadge('orange', 'يحتاج إعادة الإذن');
+    try {
+      const perm = await savedHandle.queryPermission({ mode: 'readwrite' });
+      if (perm === 'granted') {
+        _backupDirHandle = savedHandle;
+        _setBadge('green', 'جاهز');
+      } else {
+        // prompt أو denied — احفظ الـ handle وأظهر زر منح الإذن
+        _backupDirHandle = savedHandle;
+        _backupNeedsPermission = true;
+        _setBadge('orange', `📁 ${savedHandle.name} — اضغط "منح الإذن" للمتابعة`);
+      }
+    } catch(e) {
       _backupDirHandle = null;
+      _setBadge('gray', 'لم يتم اختيار مجلد');
     }
   } else {
     _setBadge('gray', 'لم يتم اختيار مجلد');
@@ -3861,12 +3871,11 @@ async function _verifyAndRestoreHandle(handle) {
       _setBadge('green', 'جاهز');
       return true;
     }
-    // إذا كانت prompt → احفظ الـ handle وأظهر زر منح الإذن
+    // إذا كانت prompt → اطلب الإذن (يحتاج gesture من المستخدم)
     if (perm === 'prompt') {
       _backupDirHandle = handle;
-      _backupNeedsPermission = true;
-      _setBadge('orange', `📁 ${handle.name} — اضغط "منح الإذن" لإعادة الربط`);
-      return true;
+      _setBadge('orange', 'يحتاج إعادة الإذن');
+      return true; // نحفظه ونطلب الإذن لاحقاً عند أول عملية
     }
     return false;
   } catch(e) {
@@ -3892,24 +3901,21 @@ async function _ensurePermission() {
   }
 }
 
-// --- منح الإذن للمجلد المحفوظ (بعد ريفريش) ---
+// --- منح الإذن للمجلد بعد الريفريش ---
 async function grantBackupPermission() {
-  if (!_backupDirHandle) { showToast('⚠️ لم يتم اختيار مجلد بعد', 'orange'); return; }
+  if (!_backupDirHandle) return;
   try {
     const perm = await _backupDirHandle.requestPermission({ mode: 'readwrite' });
     if (perm === 'granted') {
       _backupNeedsPermission = false;
       _setBadge('green', 'جاهز');
       _renderBackupUI();
-      showToast(`✅ تم منح الإذن للمجلد: ${_backupDirHandle.name}`, 'green');
+      showToast(`✅ تم منح الإذن — ${_backupDirHandle.name}`, 'green');
       if (_backupSettings.enabled) _startAutoBackup();
     } else {
-      _setBadge('red', 'تم رفض الإذن');
-      showToast('❌ تم رفض الإذن — اختر المجلد مرة أخرى', 'red');
+      _setBadge('red', 'تم رفض الإذن — اختر مجلداً مرة أخرى');
+      showToast('❌ تم رفض الإذن', 'red');
     }
-    // أخفِ زر منح الإذن بعد المحاولة
-    const grantBtn = document.getElementById('btn-grant-permission');
-    if (grantBtn) grantBtn.style.display = 'none';
   } catch(e) {
     showToast('❌ ' + e.message, 'red');
   }
@@ -4137,11 +4143,9 @@ function _renderBackupUI() {
   const folderName = document.getElementById('backup-folder-name');
   if (folderName) folderName.textContent = _backupDirHandle ? `📁 ${_backupDirHandle.name}` : 'لم يتم اختيار مجلد بعد';
 
-  // إظهار/إخفاء أزرار المجلد
+  // إظهار/إخفاء الأزرار
   const clearBtn = document.getElementById('btn-clear-folder');
   if (clearBtn) clearBtn.style.display = _backupDirHandle ? 'inline-flex' : 'none';
-
-  // زر منح الإذن — يظهر فقط إذا كان المجلد محفوظاً لكن يحتاج إذناً
   const grantBtn = document.getElementById('btn-grant-permission');
   if (grantBtn) grantBtn.style.display = (_backupDirHandle && _backupNeedsPermission) ? 'inline-flex' : 'none';
 
